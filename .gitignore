@@ -1,0 +1,22 @@
+# Raw data
+data/*.csv
+data/*.xlsx
+data/*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local database
+*.db
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
