@@ -1,61 +1,73 @@
--- Olist E-Commerce Analytics
--- Day 2 starter SQL queries
--- These queries assume the CSV files have been loaded into SQLite
--- using scripts/build_sqlite_db.py.
+-- Olist E-Commerce Sales & Customer Analytics
+-- SQL analysis used to explore orders, customers, products and sellers.
 
 -- 1. Preview orders
 SELECT *
-FROM olist_orders_dataset
+FROM orders
 LIMIT 10;
 
--- 2. Orders by status
+
+-- 2. Count orders by status
 SELECT
     order_status,
     COUNT(*) AS order_count
-FROM olist_orders_dataset
+FROM orders
 GROUP BY order_status
 ORDER BY order_count DESC;
 
--- 3. Revenue by product category
-SELECT
-    COALESCE(t.product_category_name_english, p.product_category_name) AS category,
-    ROUND(SUM(i.price), 2) AS revenue,
-    COUNT(DISTINCT i.order_id) AS orders
-FROM olist_order_items_dataset AS i
-LEFT JOIN olist_products_dataset AS p
-    ON i.product_id = p.product_id
-LEFT JOIN product_category_name_translation AS t
-    ON p.product_category_name = t.product_category_name
-GROUP BY category
-ORDER BY revenue DESC;
 
--- 4. Revenue by customer state
+-- 3. Revenue by customer state
 SELECT
     c.customer_state,
-    ROUND(SUM(i.price), 2) AS revenue,
-    COUNT(DISTINCT o.order_id) AS orders
-FROM olist_orders_dataset AS o
-JOIN olist_customers_dataset AS c
+    ROUND(SUM(i.price), 2) AS revenue
+FROM orders o
+JOIN customers c
     ON o.customer_id = c.customer_id
-JOIN olist_order_items_dataset AS i
+JOIN order_items i
     ON o.order_id = i.order_id
 GROUP BY c.customer_state
-ORDER BY revenue DESC;
+ORDER BY revenue DESC
+LIMIT 10;
 
--- 5. Repeat customers
+
+-- 4. Top product categories by revenue
+SELECT
+    t.product_category_name_english AS product_category,
+    ROUND(SUM(i.price), 2) AS revenue
+FROM order_items i
+JOIN products p
+    ON i.product_id = p.product_id
+JOIN product_category_translation t
+    ON p.product_category_name = t.product_category_name
+GROUP BY t.product_category_name_english
+ORDER BY revenue DESC
+LIMIT 10;
+
+
+-- 5. Top sellers by revenue
+SELECT
+    i.seller_id,
+    s.seller_city,
+    s.seller_state,
+    ROUND(SUM(i.price), 2) AS revenue
+FROM order_items i
+JOIN sellers s
+    ON i.seller_id = s.seller_id
+GROUP BY
+    i.seller_id,
+    s.seller_city,
+    s.seller_state
+ORDER BY revenue DESC
+LIMIT 10;
+
+
+-- 6. Repeat customers
 SELECT
     c.customer_unique_id,
-    COUNT(DISTINCT o.order_id) AS orders
-FROM olist_customers_dataset AS c
-JOIN olist_orders_dataset AS o
+    COUNT(DISTINCT o.order_id) AS order_count
+FROM customers c
+JOIN orders o
     ON c.customer_id = o.customer_id
 GROUP BY c.customer_unique_id
 HAVING COUNT(DISTINCT o.order_id) > 1
-ORDER BY orders DESC;
-
--- TODO Day 2:
--- Write your own queries for:
--- a) monthly revenue
--- b) average review score by category
--- c) delivery delays by state
--- d) top sellers by revenue
+ORDER BY order_count DESC;
